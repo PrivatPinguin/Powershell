@@ -42,18 +42,40 @@ function userPath()
 }
 
 #outputtext
-function outputText($filePath)
+function outputText($filePath, $errorID)
 {
-	if (Test-Path $filePath)
+	#end text
+	if ((Test-Path $filePath) -and (errorID -eq "end")) 
 	{
-		Write-Host -ForegroundColor Cyan "`n" $filename -NoNewline
+		Write-Host -ForegroundColor Cyan "`n" $filePath -NoNewline
 		Write-Host "was created in " -NoNewline
-		Write-Host -ForegroundColor Cyan $path "`n"
+		Write-Host -ForegroundColor Cyan $path ".`n"
 	} 
-	else
+	#path not found
+	elseif($errorID -eq "pnf") 
 	{
-		Write-Host -ForegroundColor Cyan "`n" $filename -NoNewline
-		Write-Host " was not created`n" 
+		Write-Host -ForegroundColor red "`n" $filePath -NoNewline
+		Write-Host " is not a path."
+	}
+	#not created
+	else 
+	{
+		Write-Host -ForegroundColor Cyan "`n" $filePath -NoNewline
+		Write-Host " was not created.`n" 
+	}
+}
+
+#test path existence
+function testPath($path)
+{
+	try
+	{
+		Set-Location -path $path
+	}
+	catch
+	{
+		outputText $path "pnf" 
+		$path = userPath
 	}
 }
 
@@ -63,48 +85,52 @@ function initSkript()
     #asks for path input
     $path = userPath 
     
+	do
+	{
+    	testPath $path
+	}
+	while( Test-Path -path $path )
+	
+    $filePath = createFilePath $path
     ## clear path
     #$path = 'C:\'
     
-    if(Test-Path $path)
+
+    #delate if file exists
+    if (Test-Path -path $filePath)
     {
-        #change direction
-        if(Set-Location $path)
-        {
-            $filePath = createFilePath $path
-    
-            #delate if file exists
-            if (Test-Path $filePath)
+    	$confirmation = Read-Host "Remove path '"$filepath"' ? [y/n]"
+    	Do
+    	{
+    	    if ($confirmation -ne "y")
+	      	{
+	    		break
+	    	}
+            else
             {
-    	        $confirmation = Read-Host "Remove path '"$filepath"' ? [y/n]"
-    	        Do
-    	        {
-    	    	    if ($confirmation -ne "y")
-	      	        {
-	    		        break
-	    	        }
-                    else
-                    {
-    		            #remove existing file
-    		            Remove-Item $filePath -Confirm
+    		    #remove existing file
+    		    Remove-Item $filePath -Confirm
     
-     		            #create File
-    		            New-Item -Path $filePath -ItemType File
+     		    #create File
+    		    New-Item -Path $filePath -ItemType File
     
-    		            #add content to file
-    		            foreach ($objPath in (Get-ChildItem -Path $path ))
-    		            {
-    		       	        Add-Content $filePath $objPath 
-    		            }
-                    }
-    	        }
-    	        while($confirmation -ne "y")
+    		    #add content to file
+    		    foreach ($objPath in (Get-ChildItem -Path $path ))
+    		    {
+    		       	Add-Content $filePath $objPath 
+    		    }
             }
-        }
+    	}
+    	while($confirmation -ne "y")
+	#outputtext
+    	outputText $filePath "end"	
+    }
+    else
+    {
+    	outputText $path "pnf" 
     }
 
-    #outputtext
-    outputText $filePath
+
 
     #waits for userinput
     pause
