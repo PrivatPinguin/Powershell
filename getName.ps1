@@ -140,4 +140,4 @@ function initSkript()
 initSkript
 
 
-# C:\Users\Alexander\Pictures\pr0
+# C:\Users\Privat_Pinguin\Pictures\pr0
